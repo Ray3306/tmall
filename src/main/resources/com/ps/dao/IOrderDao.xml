@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper  
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.ps.dao.IOrderDao">
+  
+  <select id="queryOrderList" parameterType="map" resultMap="order_r">
+  	SELECT o.id,o.orderCode,o.status,ROUND(SUM((p.promotePrice*i.number)),2)AS money,
+  	SUM(i.number)AS number,u.name,o.createDate,o.payDate,o.deliveryDate,o.confirmDate  FROM order_ o 
+		LEFT JOIN USER u ON o.uid=u.id
+		LEFT JOIN orderitem i ON o.id=i.oid 
+		LEFT JOIN product p ON i.pid=p.id WHERE o.payDate IS NOT NULL GROUP BY o.id
+		ORDER BY o.id DESC
+	<if test="start!=null and size!=null">
+      limit #{start},#{size}
+    </if>
+  </select>
+  
+  <resultMap type="com.ps.vo.Order" id="order_r">
+  	<id column="id" property="id"/>
+  	<result column="orderCode" property="orderCode"/>
+  	<result column="status" property="status"/>
+  	<result column="money" property="money"/>
+  	<result column="number" property="number"/>
+  	<result column="name" property="name"/>
+  	<result column="createDate" property="createDate"/>
+  	<result column="payDate" property="payDate"/>
+  	<result column="deliveryDate" property="deliveryDate"/>
+  	<result column="confirmDate" property="confirmDate"/>
+  </resultMap>
+  
+  <select id="queryOrderTotal" resultType="int">
+  	select count(*) from order_ where payDate IS NOT NULL
+  </select>
+  
+  
+  <insert id="placeOrder" parameterType="com.ps.vo.Product" useGeneratedKeys="true" keyProperty="id">
+  	insert into order_ (orderCode,address,post,receiver,mobile,userMessage,createDate,uid,status)
+  		values(#{orderCode},#{address},#{post},#{receiver},#{mobile},#{userMessage},CURRENT_TIMESTAMP,#{uid},"待发货")
+  </insert>
+
+<!--付款  -->
+<update id="payedOrder" parameterType="int">
+	update order_ 
+	<set>
+		<if test="payDate !=null">payDate=CURRENT_TIMESTAMP</if>
+	</set>
+	 where id=#{value}
+</update>
+
+<select id="queryOrderById" parameterType="int" resultType="com.ps.vo.Order">
+select * from order_ where id=#{value}
+</select>
+  
+  <delete id="clearCartProduct" parameterType="java.util.List">
+  	delete from orderitem where id in
+	  	<foreach collection="list" item="item" open="(" separator="," close=")">
+	  		#{item}
+	  	</foreach>
+  </delete>
+  
+  
+  </mapper>

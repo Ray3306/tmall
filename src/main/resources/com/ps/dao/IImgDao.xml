@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper  
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.ps.dao.IImgDao">
+  
+  <insert id="addImg" parameterType="com.ps.vo.Img">
+  	insert into image_t (cid,path,type)values(#{cid},#{path},#{type})
+  </insert>
+  
+  <update id="updateImg" parameterType="com.ps.vo.Img">
+  	update image_t 
+  	<set>
+  		<if test="path !=null and path !='' ">path=#{path}</if>
+  	</set>
+  	where type=#{type} and cid=#{cid} 
+  </update>
+  
+  <select id="queryProductSingleImgList" parameterType="String" resultType="com.ps.vo.Img">
+  	select id,pid,type from productimage where pid=#{value} and type='type_single' order by id desc
+  </select>
+  
+  <select id="queryProductDetailImgList" parameterType="String" resultType="com.ps.vo.Img">
+  	select id,pid,type from productimage where pid=#{value} and type='type_detail' order by id desc
+  </select>
+  
+  </mapper>

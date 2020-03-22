@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper  
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.ps.dao.IItemDao">
+  
+  
+  <resultMap type="com.ps.vo.Item" id="item_product">
+  	<id     column="id"         property="id"/>
+  	<result column="name"    property="name"/>
+  	<collection property="productList" ofType="com.ps.vo.Product" select="queryProductByCid" column="id"/>
+  </resultMap>
+  
+  <select id="queryItemList" resultMap="item_product" parameterType="map">
+  	SELECT c.id,c.name FROM category c ORDER BY c.id DESC
+  	<if test="start!=null and size!=null">
+      limit #{start},#{size}
+    </if>
+  </select>
+  
+  <select id="queryProductByCid" resultType="com.ps.vo.Product">
+  	select id,cid,name,subTitle,orignalPrice,promotePrice,stock,createDate 
+  	from product where cid=#{id}
+  </select>
+  
+  	
+  <select id="queryItemTotal" resultType="int">
+  	select count(*) from category
+  </select>
+  
+  <delete id="deleteItemById" parameterType="int">
+  	delete from category where id=#{value}
+  </delete>
+  
+  <insert id="addItem" parameterType="com.ps.vo.Item" useGeneratedKeys="true" keyProperty="id">
+  	insert into category(name)values(#{name})
+  </insert>
+  
+  <update id="updateItem" parameterType="com.ps.vo.Item">
+  	update category 
+  	<set>
+  		<if test="name !=null and name !='' ">name=#{name}</if>
+  	</set>
+  	where id=#{id}
+  </update>
+  
+  <select id="queryItemName" parameterType="int" resultType="com.ps.vo.Item">
+  	select id,name from category where id=#{value}
+  </select>
+  
+  </mapper>

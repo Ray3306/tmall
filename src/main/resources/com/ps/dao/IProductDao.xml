@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper  
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"  
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+  <mapper namespace="com.ps.dao.IProductDao">
+  
+  <select id="queryProductList" resultMap="product_img" parameterType="map">
+  	SELECT p.id,p.cid,p.name,p.subtitle,p.orignalPrice,p.promotePrice,p.stock,p.createDate,
+	IFNULL(tt.counts ,0)AS saleCount, IFNULL(rr.reviewCount ,0)AS reviewCount FROM product p LEFT JOIN 
+	(SELECT SUM(i.number)AS counts,i.pid FROM order_ o LEFT JOIN orderitem i ON o.id=i.oid WHERE o.payDate IS NOT NULL GROUP BY i.pid)tt ON p.id=tt.pid
+	LEFT JOIN (SELECT COUNT(pid)AS reviewCount,pid FROM review GROUP BY pid)rr ON p.id=rr.pid 
+		<where>
+			<if test="cid !=0 ">p.cid=#{cid}</if>
+			<if test="minPrice !=null and maxPrice !=null ">and p.promotePrice between #{minPrice} and #{maxPrice}</if>
+		</where>
+  	<if test="start!=null and size!=null">
+      limit #{start},#{size}
+    </if>
+  </select>
+  
+  <resultMap type="com.ps.vo.Product" id="product_img">
+  	<id     column="id"         property="id"/>
+  	<result column="name"    property="name"/>
+  	<result column="subTitle"    property="subTitle"/>
+  	<result column="orignalPrice"    property="orignalPrice"/>
+  	<result column="promotePrice"    property="promotePrice"/>
+  	<result column="stock"    property="stock"/>
+  	<result column="createDate"    property="createDate"/>
+  	<result column="cid"    property="cid"/>
+  	<result column="reviewCount"    property="reviewCount"/>
+  	<result column="saleCount"    property="saleCount"/>
+  </resultMap>
+  
+  <select id="queryProductTotal" resultType="int" parameterType="int">
+  	select count(*) from product where cid=#{cid}
+  </select>
+  
+  <insert id="addProduct" parameterType="com.ps.vo.Product">
+  	insert into product(name,subTitle,orignalPrice,promotePrice,stock,cid,createDate)
+  	values(#{name},#{subTitle},#{orignalPrice},#{promotePrice},#{stock},#{cid},NOW())
+  </insert>
+  
+  <delete id="deleteProductById" parameterType="int">
+  	delete from product where id=#{value}
+  </delete>
+  
+  <update id="updateProduct" parameterType="com.ps.vo.Product">
+  	update product 
+  	<set>
+  		<if test="name !=null and name !='' ">name=#{name} ,</if>
+  		subTitle=#{subTitle} ,
+  		<if test="orignalPrice !=0">orignalPrice=#{orignalPrice} ,</if>
+  		<if test="promotePrice !=0">promotePrice=#{promotePrice} ,</if>
+  		<if test="stock !=0">stock=#{stock} </if>
+  	</set>
+  	where id=#{id}
+  </update>
+  
+  <select id="queryProductName" parameterType="int" resultType="com.ps.vo.Product">
+  	select id,name from product where id=#{id}
+  </select>
+  
+  <resultMap type="com.ps.vo.Product" id="pro_img">
+  		<id column="id" property="id"/>
+  		<result column="name"    property="name"/>
+  		<result column="promotePrice"    property="promotePrice"/>
+  		<result column="number"    property="number"/>
+  		<association property="img"  javaType="com.ps.vo.Img">
+	  		<id     column="id"         property="id"/>
+	  		<result column="path"    property="path"/>
+  		</association>
+  </resultMap>
+  
+  <select id="queryOrderDetails" resultMap="pro_img" parameterType="int">
+  SELECT p.id,p.name,i.path ,r.number,p.promotePrice FROM product p 
+		LEFT JOIN productimage_t i ON p.id=i.pid 
+		LEFT JOIN orderitem r ON p.id=r.pid 
+		LEFT JOIN order_ o ON o.id=r.oid 
+		WHERE o.id=#{value} GROUP BY p.id
+  </select>
+  
+  
+  
+  <select id="queryProductById" parameterType="int" resultType="com.ps.vo.Product">
+  	SELECT p.id,p.cid,p.name,p.subtitle,p.orignalPrice,p.promotePrice,p.stock,p.createDate,
+	IFNULL(tt.counts ,0)AS saleCount, IFNULL(rr.reviewCount ,0)AS reviewCount FROM product p LEFT JOIN 
+	(SELECT SUM(i.number)AS counts,i.pid FROM order_ o LEFT JOIN orderitem i ON o.id=i.oid WHERE o.payDate IS NOT NULL GROUP BY i.pid)tt ON p.id=tt.pid
+	LEFT JOIN (SELECT COUNT(pid)AS reviewCount,pid FROM review GROUP BY pid)rr ON p.id=rr.pid WHERE p.id=#{value} 
+  </select>
+  
+  <select id="queryCartProductsByUid" parameterType="int" resultType="com.ps.vo.Product">
+  	SELECT r.id as oiid,p.id,p.name,r.number,p.promotePrice ,i.id AS productImageId,i.type AS productImageType 
+		FROM product p 
+		LEFT JOIN orderitem r ON p.id=r.pid 
+		LEFT JOIN productimage i ON p.id=i.pid 
+		WHERE r.uid=#{value} GROUP BY p.id
+  </select>
+  
+  </mapper>
